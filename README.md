@@ -19,7 +19,7 @@ A production-ready AI-powered Resume Analyzer SaaS built with React + Vite + Tai
 - Vite 5
 - Tailwind CSS 3
 - React Router v6
-- Groq API (llama-3.3-70b-versatile)
+- Groq API (openai/gpt-oss-120b)
 
 ## Getting Started
 

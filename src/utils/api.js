@@ -16,7 +16,7 @@ export async function analyzeResume({ toolId, toolName, resumeContent, jdContent
       Authorization: `Bearer ${GROQ_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       temperature: 0.2,
       max_completion_tokens: 1200,
       response_format: { type: 'json_object' },
@@ -67,7 +67,7 @@ export async function analyzeResume({ toolId, toolName, resumeContent, jdContent
     // One repair attempt: ask the model to output ONLY valid JSON.
     const repaired = await repairJsonWithGroq({
       apiKey: GROQ_KEY,
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       schemaHint: getSchemaHint(),
       badOutput: cleaned,
     })
