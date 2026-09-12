@@ -140,7 +140,12 @@ export default function UploadArea({
         type="file"
         accept=".pdf"
         className="hidden"
-        onChange={e => handleFile(e.target.files[0])}
+        onChange={e => {
+          if (e.target.files?.[0]) {
+            handleFile(e.target.files[0])
+          }
+          e.target.value = ''
+        }}
       />
     </div>
   )

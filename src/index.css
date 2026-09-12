@@ -43,9 +43,8 @@
     text-size-adjust: 100%;
   }
 
-  /* Minimum tap target size for accessibility on mobile */
+  /* Smooth touch interactions on mobile */
   button, a, [role="button"] {
-    min-height: 44px;
     touch-action: manipulation;
   }
 

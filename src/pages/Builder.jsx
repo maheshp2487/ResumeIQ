@@ -2,10 +2,10 @@ import { useState, useRef } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import Card, { CardTitle } from '../components/ui/Card'
+import Card from '../components/ui/Card'
 import { useToast } from '../context/ToastContext'
 import DateRangePicker from '../components/ui/DateRangePicker'
-import { isSpamInput } from '../utils/validation'
+import { isSpamPhrase } from '../utils/validation'
 
 const TEMPLATES = ['Professional', 'Modern', 'Executive', 'Minimalist', 'Creative', 'Tech']
 
@@ -35,6 +35,31 @@ export default function Builder() {
   const updateProfile = (field, value) => setData(p => ({ ...p, profile: { ...p.profile, [field]: value } }))
 
   const handlePrint = () => {
+    if (!data.profile.name?.trim()) {
+      toast({ message: 'Please provide your full name before exporting.', variant: 'error' })
+      return
+    }
+    if (isSpamPhrase(data.profile.name)) {
+      toast({ message: 'Please enter a valid full name before exporting.', variant: 'error' })
+      return
+    }
+
+    const hasIncompleteExp = data.experience.some(e => 
+      !e.company?.trim() || !e.role?.trim() || !e.date || e.date.includes('...')
+    )
+    if (hasIncompleteExp) {
+      toast({ message: 'Please complete all required details and dates for your work experience before exporting.', variant: 'error' })
+      return
+    }
+
+    const hasIncompleteEdu = data.education.some(e => 
+      !e.school?.trim() || !e.degree?.trim() || !e.date || e.date.includes('...')
+    )
+    if (hasIncompleteEdu) {
+      toast({ message: 'Please complete all required details and dates for your education before exporting.', variant: 'error' })
+      return
+    }
+
     // Clone the resume into a dedicated print container appended to body
     // This bypasses any overflow:hidden or flex layouts from AppLayout that break printing
     const printContainer = document.createElement('div')
@@ -51,7 +76,7 @@ export default function Builder() {
   }
 
   const handleBlurSpamCheck = (e, fieldName) => {
-    if (isSpamInput(e.target.value)) {
+    if (isSpamPhrase(e.target.value)) {
       toast({ message: `Please enter a valid ${fieldName}.`, variant: 'warning' })
     }
   }
@@ -63,13 +88,13 @@ export default function Builder() {
     if (!exp.company.trim()) {
       toast({ message: 'Company name is required.', variant: 'error' }); return
     }
-    if (isSpamInput(exp.company)) {
+    if (isSpamPhrase(exp.company)) {
       toast({ message: 'Please enter a valid company name.', variant: 'error' }); return
     }
     if (!exp.role.trim()) {
       toast({ message: 'Job role / position is required.', variant: 'error' }); return
     }
-    if (isSpamInput(exp.role)) {
+    if (isSpamPhrase(exp.role)) {
       toast({ message: 'Please enter a valid job role.', variant: 'error' }); return
     }
     if (!exp.date || exp.date.includes('...')) {
@@ -85,13 +110,13 @@ export default function Builder() {
     if (!edu.school.trim()) {
       toast({ message: 'School / University name is required.', variant: 'error' }); return
     }
-    if (isSpamInput(edu.school)) {
+    if (isSpamPhrase(edu.school)) {
       toast({ message: 'Please enter a valid institution name.', variant: 'error' }); return
     }
     if (!edu.degree.trim()) {
       toast({ message: 'Degree / qualification is required.', variant: 'error' }); return
     }
-    if (isSpamInput(edu.degree)) {
+    if (isSpamPhrase(edu.degree)) {
       toast({ message: 'Please enter a valid degree.', variant: 'error' }); return
     }
     if (!edu.date || edu.date.includes('...')) {
@@ -108,8 +133,12 @@ export default function Builder() {
         toast({ message: 'Please complete the current experience entry before adding a new one.', variant: 'error' })
         return
       }
-      if (isSpamInput(openExp.company) || isSpamInput(openExp.role)) {
+      if (isSpamPhrase(openExp.company) || isSpamPhrase(openExp.role)) {
         toast({ message: 'Please enter valid details for the current experience entry.', variant: 'error' })
+        return
+      }
+      if (!openExp.date || openExp.date.includes('...')) {
+        toast({ message: 'Please select a date range for the current experience before adding a new one.', variant: 'error' })
         return
       }
     }
@@ -126,8 +155,12 @@ export default function Builder() {
         toast({ message: 'Please complete the current education entry before adding a new one.', variant: 'error' })
         return
       }
-      if (isSpamInput(openEdu.school) || isSpamInput(openEdu.degree)) {
+      if (isSpamPhrase(openEdu.school) || isSpamPhrase(openEdu.degree)) {
         toast({ message: 'Please enter valid details for the current education entry.', variant: 'error' })
+        return
+      }
+      if (!openEdu.date || openEdu.date.includes('...')) {
+        toast({ message: 'Please select a date range for the current education before adding a new one.', variant: 'error' })
         return
       }
     }
@@ -321,7 +354,7 @@ export default function Builder() {
       return
     }
     
-    if (isSpamInput(trimmed)) {
+    if (isSpamPhrase(trimmed)) {
       toast({ message: 'Please enter a valid skill.', variant: 'error' })
       return
     }

@@ -71,12 +71,16 @@ export function ToastProvider({
                           ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                           : t.variant === 'error'
                             ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                            : 'bg-brand/10 text-brand border-brand/20'
+                            : t.variant === 'warning'
+                              ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                              : 'bg-brand/10 text-brand border-brand/20'
                       }`}
                   >
                     {t.variant === 'success' ? (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                     ) : t.variant === 'error' ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    ) : t.variant === 'warning' ? (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     ) : (
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -86,9 +90,9 @@ export function ToastProvider({
                   {/* Message */}
                   <div className="flex-1 min-w-0 pt-1">
                     <h3 className={`text-lg font-bold mb-1 ${
-                        t.variant === 'success' ? 'text-emerald-500' : t.variant === 'error' ? 'text-red-500' : 'text-brand'
+                        t.variant === 'success' ? 'text-emerald-500' : t.variant === 'error' ? 'text-red-500' : t.variant === 'warning' ? 'text-amber-500' : 'text-brand'
                     }`}>
-                      {t.variant === 'success' ? 'Success' : t.variant === 'error' ? 'Attention Required' : 'Notice'}
+                      {t.variant === 'success' ? 'Success' : t.variant === 'error' ? 'Attention Required' : t.variant === 'warning' ? 'Warning' : 'Notice'}
                     </h3>
                     <p className="text-base text-txt-muted leading-relaxed font-medium">
                       {t.message}
@@ -105,7 +109,9 @@ export function ToastProvider({
                         ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
                         : t.variant === 'error'
                           ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
-                          : 'bg-brand hover:bg-brand-hover shadow-brand/20'
+                          : t.variant === 'warning'
+                            ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+                            : 'bg-brand hover:bg-brand-hover shadow-brand/20'
                     }`}
                 >
                   Got it

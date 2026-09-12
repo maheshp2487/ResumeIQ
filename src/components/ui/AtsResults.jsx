@@ -1,6 +1,5 @@
 import Button from './Button'
 import ScoreRing from './ScoreRing'
-import { getScoreColor } from '../../utils/helpers'
 
 export default function AtsResults({ data, onReset }) {
   const isPass = data.atsScore >= 75

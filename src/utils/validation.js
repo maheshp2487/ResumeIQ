@@ -13,14 +13,55 @@ function uniqueWordCount(text) {
   return new Set(tokenize(text)).size
 }
 
+const KNOWN_VALID_TERMS = new Set([
+  'c', 'r', 'go', 'ai', 'ml', 'ui', 'ux', 'qa', 'hr', 'pr',
+  'c++', 'c#', 'f#', '.net', 'sql', 'css', 'php', 'npm', 'sdk', 'api', 'cli', 'xml', 'gui',
+  'srm', 'vit', 'iit', 'nit', 'mit', 'bits', 'iiit', 'ucla', 'nyu', 'cmu', 'harvard',
+  'tcs', 'hcl', 'pwc', 'kpmg', 'ey', 'ibm', 'amd', 'bmw', 'bhel', 'isro', 'drdo', 'tata',
+  'b.tech', 'm.tech', 'b.e.', 'm.e.', 'b.s.', 'm.s.', 'bca', 'mca', 'b.sc', 'm.sc', 'ph.d', 'ph.d.', 'mba',
+  'sync', 'crypt', 'lynx', 'rhythm', 'dry', 'fly', 'sky'
+])
+
+const PROFANITY_REGEX = /\b(fuck|fucker|fucking|shit|bullshit|bitch|bastard|asshole|cunt|dick|pussy|whore|slut|nigger|nigga|faggot|retard|motherfucker|wanker)\b/i
+
+const KEYBOARD_WALKS = [
+  'asdf', 'sdfg', 'dfgh', 'fghj', 'ghjk', 'hjkl', 'lkjh', 'kjhg', 'jhgf', 'hgfd', 'gfds', 'fdsa',
+  'qwer', 'wert', 'erty', 'rtyu', 'tyui', 'yuio', 'uiop', 'poiuy', 'oiuy', 'iuyt', 'uytr', 'ytre', 'trew', 'rewq',
+  'zxcv', 'xcvb', 'cvbn', 'vbnm', 'mnbv', 'nbvc', 'bvcx', 'vcxz',
+  'qazw', 'wsxe', 'edcr', 'rfvt', 'tgby', 'yhn', 'ujm',
+  '1234', '2345', '3456', '4567', '5678', '6789', '7890', '4321', '5432', '6543', '7654', '8765'
+]
+
+// Impossible word-starting consonant pairs in English / typical names
+const IMPOSSIBLE_START_CONSONANTS = /^(fg|jh|hg|gf|fd|df|jk|zx|xc|cv|vb|bn|qw|zq)/i
+
+function hasKeyboardWalk(text) {
+  const lower = text.toLowerCase()
+  return KEYBOARD_WALKS.some(walk => lower.includes(walk))
+}
+
+function hasRepeatedSubstrings(text) {
+  const t = text.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (t.length < 5) return false
+  // Check for repeated 3-char chunks (e.g. "uhd" in "fguhdiuhd")
+  for (let i = 0; i <= t.length - 6; i++) {
+    const chunk = t.slice(i, i + 3)
+    const rest = t.slice(i + 3)
+    if (rest.includes(chunk)) {
+      if (!/^[aeiou]{3}$/.test(chunk)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 /** Repeated same token (e.g. "hello hello hello") or characters (e.g. "aaaaa") */
 export function isDominantRepetition(text) {
   if (!text) return false
   const t = text.trim()
   
-  // Single char repeated 4+ times
   if (/^(.)\1{3,}$/i.test(t)) return true
-  // Short pattern repeated (e.g. abcabcabc)
   if (/^(.{2,4})\1{2,}$/i.test(t)) return true
 
   const tokens = tokenize(text)
@@ -37,8 +78,10 @@ export function isDominantRepetition(text) {
 export function looksLikeKeyboardSpam(text) {
   if (!text) return false
   const t = text.trim()
-  
-  // Single word keyboard mash (no vowels, long)
+  if (hasKeyboardWalk(t)) return true
+  if (hasRepeatedSubstrings(t)) return true
+  if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(t)) return true
+
   if (t.length >= 6 && !/[aeiouy]/i.test(t)) return true
 
   const tokens = tokenize(text)
@@ -48,27 +91,86 @@ export function looksLikeKeyboardSpam(text) {
 }
 
 /**
- * Checks if a short user input looks like spam/keyboard mash.
- * - Allows genuine uppercase acronyms ≤4 chars (IIT, MIT, VIT, SRM, UCLA)
- * - Rejects all-same-char strings
- * - Rejects 3+ char strings with zero vowels (dcd, sxsa, bcdf)
- * - Rejects dominant repetition
+ * Checks if a short user input looks like spam/keyboard mash/profanity.
+ * - Allows genuine tech/programming terms (C, C++, C#, R, Go, SQL, CSS, PHP)
+ * - Allows genuine institutions and acronyms case-insensitively (IIT, VIT, SRM, TCS, HCL, PwC, EY, KPMG)
+ * - Allows degree patterns (B.Tech, M.S., Ph.D)
+ * - Rejects profanity / curse words
+ * - Rejects repeated characters and syllables
+ * - Rejects keyboard walks (asdfgh, qwert, zxcv)
+ * - Rejects home-row mashing (fguhdiuhd) and consonant clusters
  */
 export function isSpamInput(text) {
   if (!text) return false
-  const t = text.trim()
-  if (t.length < 2) return true
+  const raw = text.trim()
+  const lower = raw.toLowerCase()
 
-  // All same characters: aaaa, dddd, 1111
-  if (/^(.)\1+$/i.test(t)) return true
+  // 1. Explicitly allow known programming languages, tech acronyms, institutes & degrees
+  if (KNOWN_VALID_TERMS.has(lower) || KNOWN_VALID_TERMS.has(raw)) return false
 
-  // Allow known-pattern uppercase acronyms ≤4 chars: IIT, MIT, VIT, SRM, UCLA, NIT
-  if (t.length <= 4 && /^[A-Z0-9]+$/.test(t)) return false
+  // Allow clean degree patterns: B.Tech, M.S., Ph.D, etc.
+  if (/^[a-zA-Z]\.([a-zA-Z]+\.?)+$/.test(raw)) return false
 
-  // No vowels at all in 3+ char strings = keyboard spam (dcd, sxsa, bcdf, qwrt)
-  if (t.length >= 3 && !/[aeiouy]/i.test(t)) return true
+  // Profanity filter
+  if (PROFANITY_REGEX.test(raw)) return true
 
-  return isDominantRepetition(t)
+  // Single character check (already handled 'c' and 'r' above)
+  if (raw.length < 2) return true
+
+  // All same character: aaaa, 1111, zzzz
+  if (/^(.)\1+$/i.test(raw)) return true
+
+  // Any character repeated 4+ times consecutively: "aaaa", "zzzz"
+  if (/(.)\1{3,}/i.test(raw)) return true
+
+  // 4+ char chunk repeated (e.g. asdfasdf, abcdabcd)
+  if (/^(.{4,})\1+$/i.test(raw)) return true
+
+  // Short 2-3 char chunk repeated 3+ times (e.g. hahaha, bababa, tatatata, abcabcabc)
+  if (/^(.{2,3})\1{2,}$/i.test(raw)) return true
+
+  // 3-char chunk with no vowels repeated (e.g. xyzxyz)
+  const match2 = /^(.{3})\1+$/i.exec(raw)
+  if (match2 && !/[aeiouy]/i.test(match2[1])) return true
+
+  // Keyboard walks: asdfgh, qwert, zxcv, etc.
+  if (hasKeyboardWalk(raw)) return true
+
+  // Impossible initial consonants (e.g. "fguhdiuhd" starts with "fg")
+  if (IMPOSSIBLE_START_CONSONANTS.test(lower)) return true
+
+  // Repeated 3+ char substrings in a single word (e.g. "uhd" in "fguhdiuhd")
+  if (hasRepeatedSubstrings(raw)) return true
+
+  // 5+ consecutive consonants (unpronounceable consonant mash e.g. xyzqwr, rthkl)
+  if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(raw)) return true
+
+  // Allow genuine uppercase acronyms (IIT, MIT, VIT, UCLA, AWS, etc.)
+  if (raw.length <= 5 && /^[A-Z0-9+#.]+$/.test(raw)) return false
+
+  // If word has no true vowels [aeiou] and is not in known dictionary
+  if (!raw.includes(' ') && raw.length >= 4 && !/[aeiou]/i.test(raw)) return true
+
+  // If 3-char word has no vowels at all: e.g. dcd, bcd
+  if (!raw.includes(' ') && raw.length >= 3 && !/[aeiouy]/i.test(raw)) return true
+
+  return false
+}
+
+/**
+ * Checks an entire phrase or sentence: checks both whole string and individual words.
+ */
+export function isSpamPhrase(text) {
+  if (!text) return false
+  const trimmed = text.trim()
+  if (isSpamInput(trimmed)) return true
+
+  // Check individual tokens
+  const words = trimmed.split(/\s+/).filter(w => w.length >= 2)
+  for (const word of words) {
+    if (isSpamInput(word)) return true
+  }
+  return false
 }
 
 /**
@@ -157,7 +259,11 @@ export function validateAnalysisInputs({ resumeText, jdText, needsJD }) {
       return { ok: false, message: 'Please provide a valid job description. The pasted text does not appear to be a real job posting.' }
     }
 
-    if (jd.length < MIN_JD_CHARS) {
+    const jdLongEnough =
+      jd.length >= MIN_JD_CHARS ||
+      (jd.length >= MIN_JD_CHARS_WITH_SIGNALS && hasJobLikeSignals(jd))
+
+    if (!jdLongEnough) {
       return { ok: false, message: 'Job description is too short to provide accurate matching' }
     }
   }
