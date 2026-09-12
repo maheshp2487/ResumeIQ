@@ -13,16 +13,16 @@ export default function Button({
 
   const variants = {
     primary:
-      'bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:shadow-xl hover:shadow-indigo-500/20 hover:-translate-y-0.5',
+      'bg-brand hover:bg-brand-hover text-white shadow-sm hover:shadow-md hover:-translate-y-0.5',
 
     outline:
-      'border border-white/10 bg-white/5 text-[#d0d0dc] hover:border-indigo-500/20 hover:bg-indigo-500/5 hover:text-white',
+      'border border-border bg-bg text-txt hover:bg-bg-tertiary',
 
     ghost:
-      'bg-transparent text-[#9b9bb0] hover:bg-white/5 hover:text-white',
+      'bg-transparent text-txt-muted hover:bg-bg hover:text-txt',
 
     danger:
-      'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20',
+      'bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20',
   }
 
   const sizes = {

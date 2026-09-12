@@ -25,7 +25,6 @@ export function ToastProvider({
     ({
       message,
       variant = 'info',
-      duration = 3200,
     }) => {
       const id = ++idSeq
 
@@ -37,13 +36,8 @@ export function ToastProvider({
           variant,
         },
       ])
-
-      window.setTimeout(
-        () => dismiss(id),
-        duration
-      )
     },
-    [dismiss]
+    []
   )
 
   const value = useMemo(
@@ -60,58 +54,67 @@ export function ToastProvider({
     >
       {children}
 
-      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-[100] flex flex-col gap-3 w-[calc(100vw-2rem)] md:w-auto md:max-w-sm">
-        {toasts.map(t => (
-          <div
-            key={t.id}
-            className={`group relative overflow-hidden rounded-2xl border backdrop-blur-xl shadow-2xl px-4 py-4 animate-[toastIn_0.25s_ease-out]
-              ${
-                t.variant === 'success'
-                  ? 'bg-[#13131c]/95 border-emerald-500/15'
-                  : t.variant === 'error'
-                    ? 'bg-[#13131c]/95 border-red-500/15'
-                    : 'bg-[#13131c]/95 border-white/5'
-              }`}
-          >
-            <div className="flex items-start gap-3">
-              {/* Icon */}
+      {toasts.length > 0 && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="flex flex-col gap-4 w-full max-w-md">
+            {toasts.map(t => (
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0
-                  ${
-                    t.variant === 'success'
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : t.variant === 'error'
-                        ? 'bg-red-500/10 text-red-400'
-                        : 'bg-indigo-500/10 text-indigo-400'
-                  }`}
+                key={t.id}
+                className="bg-bg-secondary rounded-3xl p-6 shadow-2xl border border-border animate-fade-in-up"
               >
-                {t.variant === 'success'
-                  ? '✓'
-                  : t.variant === 'error'
-                    ? '⚠'
-                    : '◎'}
-              </div>
+                <div className="flex items-start gap-4 mb-6">
+                  {/* Icon */}
+                  <div
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 border shadow-inner
+                      ${
+                        t.variant === 'success'
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                          : t.variant === 'error'
+                            ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                            : 'bg-brand/10 text-brand border-brand/20'
+                      }`}
+                  >
+                    {t.variant === 'success' ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    ) : t.variant === 'error' ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    )}
+                  </div>
 
-              {/* Message */}
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-sm text-[#f1f1f5] leading-relaxed font-medium">
-                  {t.message}
-                </p>
-              </div>
+                  {/* Message */}
+                  <div className="flex-1 min-w-0 pt-1">
+                    <h3 className={`text-lg font-bold mb-1 ${
+                        t.variant === 'success' ? 'text-emerald-500' : t.variant === 'error' ? 'text-red-500' : 'text-brand'
+                    }`}>
+                      {t.variant === 'success' ? 'Success' : t.variant === 'error' ? 'Attention Required' : 'Notice'}
+                    </h3>
+                    <p className="text-base text-txt-muted leading-relaxed font-medium">
+                      {t.message}
+                    </p>
+                  </div>
+                </div>
 
-              {/* Close */}
-              <button
-                onClick={() =>
-                  dismiss(t.id)
-                }
-                className="text-[#6f6f86] hover:text-white transition-colors text-sm"
-              >
-                ✕
-              </button>
-            </div>
+                {/* Single Dismiss Button */}
+                <button
+                  onClick={() => dismiss(t.id)}
+                  className={`w-full py-3.5 rounded-xl text-white font-bold tracking-wide transition-all shadow-md hover:-translate-y-0.5 
+                    ${
+                      t.variant === 'success'
+                        ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
+                        : t.variant === 'error'
+                          ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
+                          : 'bg-brand hover:bg-brand-hover shadow-brand/20'
+                    }`}
+                >
+                  Got it
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </ToastContext.Provider>
   )
 }

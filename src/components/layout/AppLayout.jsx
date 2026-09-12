@@ -1,20 +1,22 @@
 import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
+import Header from './Header'
+import AnimatedBackground from '../ui/AnimatedBackground'
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col md:flex-row overflow-hidden">
-      {/* Sidebar */}
-      <div className="md:block">
-        <Sidebar />
-      </div>
+    <div className="min-h-screen bg-bg flex flex-col overflow-hidden transition-colors duration-300 relative">
+      {/* Premium Background Animation */}
+      <AnimatedBackground />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto w-full">
-        <div className="p-4 md:p-6 lg:p-8">
+      {/* Top Navigation */}
+      <Header />
+
+      {/* Main Content — Scrollable */}
+      <main className="flex-1 overflow-y-auto w-full relative z-10">
+        <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
           <Outlet />
         </div>
       </main>
     </div>
   )
-}
+}

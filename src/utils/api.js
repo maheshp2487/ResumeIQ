@@ -2,28 +2,35 @@
  * Calls the secure Vercel Serverless backend to analyze a resume.
  */
 export async function analyzeResume({ toolId, toolName, resumeContent, jdContent = '' }) {
-  const response = await fetch('/api/analyze', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      toolId,
-      toolName,
-      resumeContent,
-      jdContent,
-    }),
-  })
+  let response
+  try {
+    response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      body: JSON.stringify({ toolId, toolName, resumeContent, jdContent }),
+    })
+  } catch {
+    // Network error — server not reachable
+    throw new Error('Unable to connect to the analysis service. Please check your connection and try again.')
+  }
 
   if (!response.ok) {
-    let details = ''
+    let userMessage = 'Something went wrong. Please try again in a moment.'
     try {
       const errJson = await response.json()
-      details = errJson?.error || ''
+      // Use backend's user-friendly error if available, but never expose raw codes
+      if (errJson?.error && !errJson.error.toLowerCase().includes('api')) {
+        userMessage = errJson.error
+      }
     } catch {
-      // ignore
+      // ignore parse errors
     }
-    throw new Error(`API error (${response.status})${details ? `: ${details}` : ''}`)
+    throw new Error(userMessage)
   }
 
   return response.json()

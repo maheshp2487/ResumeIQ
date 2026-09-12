@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   const prompt = buildPrompt(toolId || toolName, resumeContent, jdContent || '')
-  // We use GROQ_API_KEY (no VITE_ prefix) for the server-side environment variable.
+  
   const GROQ_KEY = process.env.GROQ_API_KEY
   if (!GROQ_KEY) {
     return res.status(500).json({ error: 'Server configuration error: Missing API key.' })
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'openai/gpt-oss-120b',
-        temperature: 0.2,
+        temperature: 0.4,
         max_completion_tokens: 1200,
         response_format: { type: 'json_object' },
         messages: [
@@ -40,14 +40,10 @@ export default async function handler(req, res) {
     })
 
     if (!response.ok) {
-      let details = ''
-      try {
-        const errJson = await response.json()
-        details = errJson?.error?.message || errJson?.message || ''
-      } catch {
-        // ignore
-      }
-      return res.status(response.status).json({ error: `API error: ${details}` })
+      console.error(`Groq API Error: ${response.status}`)
+      return res.status(response.status).json({ 
+        error: 'The analysis service is currently unavailable. Please try again in a moment.' 
+      })
     }
 
     const data = await response.json()
@@ -73,7 +69,6 @@ export default async function handler(req, res) {
       }
 
       if (!parsedResult) {
-        // One repair attempt
         const repaired = await repairJsonWithGroq({
           apiKey: GROQ_KEY,
           model: 'openai/gpt-oss-120b',
@@ -167,117 +162,72 @@ function buildPrompt(toolId, resume, jd) {
   "summary": "<2-4 sentence professional assessment>"
 }`
 
-  const antiGeneric = `CRITICAL — realism rules:
-- Quote or paraphrase specifics from the resume/JD (technologies, role titles, project names if present). Never invent employers, degrees, or years not in the text.
-- Weak, thin, or student resumes MUST yield LOW atsScore/techSkillMatch (typically 25–55) and MORE items in weakAreas; do NOT praise thin content.
-- Strong, experienced resumes with metrics may score HIGH (75–92).
-- If the resume claims cloud/DevOps but JD or context expects AWS/K8s and those are absent, lower techSkillMatch and list them in missingSkills.
-- If React/Tailwind (or similar) appear in JD but not resume, lower matchScore and mention explicitly.
-- Each tool must produce DISTINCT strengths, weakAreas, and suggestions — do not reuse the same phrases across tools.
-- hiringConfidence must align with scores (High only if evidence is strong).
-
-Schema for THIS tool (same JSON keys for all tools, but INTERPRET scores per tool instructions below):
-${schema}`
-
   const context = `Resume content:
 ${resume}
-${jd ? `\nJob Description:\n${jd}` : ''}`
+${jd ? `\nJob Description:\n${jd}` : ''}
+
+Analysis Request ID: ${Date.now()}-${Math.floor(Math.random() * 1000)}
+
+CRITICAL: You must output ONLY a single, valid JSON object matching the requested schema. Do NOT include markdown formatting or backticks.`
 
   const tool = String(toolId || '').toLowerCase()
 
   if (tool.includes('ats-checker')) {
-    return `${antiGeneric}
+    return `CRITICAL RULES FOR ATS CHECKER:
+- This tool ONLY evaluates machine readability, layout, and formatting. Do NOT critique storytelling or content depth.
+- atsScore = Overall ATS structural score (deduct for likely parsing issues).
+- techSkillMatch = Formatting and placement of keywords (are they extractable?).
+- matchScore = 0 (Not applicable for this tool).
+- strengths = Structural positives (e.g., "Standard headings used", "Clear chronological format").
+- weakAreas = Parsing risks (e.g., "Multi-column layout detected", "Icons used instead of bullet points").
+- missingSkills = Empty array [].
+- suggestions = Explicit formatting fixes (e.g., "Change 'Work History' to 'Experience'", "Remove tables").
+- keywords = Extracted technical terms that ATS parsers will easily find.
+- summary = Focus entirely on how easily a machine can parse this document.
 
-TOOL: ATS Resume Checker ONLY.
-- atsScore = ATS compatibility / machine readability (sections, plain bullets, keyword spread, likely parsing issues). NOT overall writing quality.
-- techSkillMatch = how well role-relevant keywords appear in parseable form (density + placement), not personality.
-- matchScore: if no JD, set matchScore close to atsScore OR a neutral 45–60; if JD present, align keyword overlap.
-- strengths: ATS positives (clear headings, standard section names, keyword coverage, simple layout).
-- weakAreas: parsing risks (tables, multi-column, icons, dense headers, tiny fonts implied by structure, missing standard sections).
-- suggestions: concrete ATS fixes (single column, standard headings, paste-friendly bullets, keyword clusters).
-- keywords: missing ATS-relevant tokens inferred from resume+JD (skills/tools).
-- summary: focus on ATS pass probability, not storytelling.
+Schema:
+${schema}
 
 ${context}`
   }
 
   if (tool.includes('resume-analyzer')) {
-    return `${antiGeneric}
+    return `CRITICAL RULES FOR CONTENT & IMPACT ANALYZER:
+- This tool ONLY evaluates storytelling, impact metrics, and action verbs. Do NOT mention ATS parsing, multi-columns, or layouts.
+- atsScore = Overall Content Quality score.
+- techSkillMatch = Strength of technical proof (e.g., "Used React to build X" vs just "React").
+- matchScore = 0 (Not applicable without JD).
+- strengths = Narrative strengths (e.g., "Strong use of metrics", "Clear progression").
+- weakAreas = Editorial problems (e.g., "Passive voice in Experience", "Missing quantifiable results").
+- missingSkills = Empty array [].
+- suggestions = Specific, rewrite-ready bullet points (e.g., "Rewrite 'Helped with sales' to 'Increased sales by 15% via...'").
+- keywords = Power verbs and industry terms used well.
+- summary = Focus entirely on how compelling the resume reads to a human hiring manager.
 
-TOOL: Resume Analyzer ONLY (quality of content & story).
-- atsScore = overall resume quality / impact (use this as the main quality score for this tool).
-- techSkillMatch = strength of technical proof (projects, tools, measurable outcomes).
-- matchScore: without JD estimate market readiness from resume alone (40–85); with JD use overlap.
-- strengths: impact statements, clarity, project depth, metrics, progression (only if supported by text).
-- weakAreas: vague bullets, no metrics, weak verbs, thin projects, formatting of content (not ATS parsing).
-- suggestions: rewrite bullets, quantify, reorder sections, strengthen projects.
-- keywords: skills that should appear or are under-emphasized based on resume target.
+Schema:
+${schema}
 
 ${context}`
   }
 
   if (tool.includes('jd-match')) {
-    return `${antiGeneric}
+    return `CRITICAL RULES FOR JOB DESCRIPTION MATCH:
+- This tool ONLY evaluates alignment between the resume and the provided Job Description.
+- matchScore = Percentage fit with JD (overall alignment).
+- atsScore = 0 (Not applicable here).
+- techSkillMatch = Overlap on technical stack specifically requested in JD.
+- strengths = JD requirements that are clearly met in the resume.
+- weakAreas = Gaps in seniority, domain experience, or missing core requirements.
+- missingSkills = Specific skills mentioned in JD but missing from resume.
+- suggestions = Actionable steps to bridge the gap (e.g., "Add a project demonstrating AWS", "Highlight cloud experience").
+- keywords = High-value JD terms absent or weak in resume.
+- summary = Focus entirely on whether this candidate is ready to interview for this specific role.
 
-TOOL: JD Match ONLY (alignment resume vs JD).
-- matchScore = percentage fit with JD (must-haves, tools, domain). Primary score for evaluation.
-- atsScore = supporting signal: resume strength as presented (can diverge from matchScore).
-- techSkillMatch = overlap on technical stack between resume and JD.
-- strengths: matched requirements, tools, and themes with evidence.
-- missingSkills: JD requirements NOT clearly demonstrated in resume (be explicit: e.g. "AWS (mentioned in JD, not in resume)").
-- weakAreas: gaps in responsibilities, domain, seniority mismatch.
-- suggestions: targeted edits to mirror JD language (without fabrication).
-- keywords: high-value JD terms absent or weak in resume.
-
-${context}`
-  }
-
-  if (tool.includes('skill-gap')) {
-    return `${antiGeneric}
-
-TOOL: Skill Gap ONLY (learning path toward the role in JD).
-- missingSkills: prioritized list (must-learn vs should-learn) from JD vs resume.
-- techSkillMatch = how much of the required stack is already demonstrated.
-- matchScore = role readiness estimate from gap size (lower = more gaps).
-- atsScore = optional baseline resume strength; keep lower if resume is thin.
-- strengths: skills already evidenced.
-- weakAreas: missing evidence for critical JD skills; interview risk areas.
-- suggestions: learning roadmap (courses/projects) + how to add proof to resume.
-- summary: readiness narrative and fastest path to credible proof.
+Schema:
+${schema}
 
 ${context}`
   }
 
-  if (tool.includes('improvements')) {
-    return `${antiGeneric}
-
-TOOL: Resume Improvements ONLY (actionable edits).
-- suggestions: numbered-quality rewrites — each must reference something in the resume (section/bullet/skills).
-- weakAreas: editorial problems (passive voice, redundancy, weak hooks).
-- strengths: what to keep while editing.
-- atsScore = potential uplift after fixes (honest: weak resume → low 30s–50s until rewritten).
-- techSkillMatch = how compelling tech proof is today.
-- matchScore: if no JD, omit alignment focus; mirror atsScore or set 50–70 neutral band.
-
-${context}`
-  }
-
-  if (tool.includes('score-checker')) {
-    return `${antiGeneric}
-
-TOOL: Resume Score Checker ONLY (weighted rubric).
-- Treat atsScore as FINAL weighted overall employability score (clarity 20%, impact 25%, skills evidence 25%, structure 15%, credibility 15% — approximate mentally).
-- In summary, briefly justify the weighting in plain language (no tables).
-- techSkillMatch = technical evidence sub-score feel converted to 0–100.
-- matchScore: without JD mirror overall; with JD add alignment component.
-- weakAreas: category-specific misses.
-- strengths: category-specific wins.
-- suggestions: what moves the score most per category.
-
-${context}`
-  }
-
-  return `${antiGeneric}
-
-${context}`
+  return `Schema:\n${schema}\n\n${context}`
 }

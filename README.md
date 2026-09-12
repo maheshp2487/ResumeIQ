@@ -1,96 +1,124 @@
-# ResumeAI Pro
+# ResumeIQ
 
-A production-ready AI-powered Resume Analyzer SaaS built with React + Vite + Tailwind CSS.
+> AI-powered resume analysis, ATS checking, JD matching, and resume building — all in the browser. No sign-up. No credit card. Free.
+
+**Live:** [your-vercel-url.vercel.app](https://your-vercel-url.vercel.app)
+
+---
 
 ## Features
 
-- **Authentication** — Sign up / Login with localStorage, protected routes
-- **ATS Resume Checker** — Check ATS compatibility score
-- **Resume Analyzer** — Deep resume content & structure analysis
-- **JD Match** — Resume vs Job Description comparison
-- **Skill Gap Analysis** — Identify missing skills for target roles
-- **Resume Improvements** — AI-powered improvement suggestions
-- **Score Checker** — Overall resume quality score
-- **About Page** — Creator info with professional layout
+| Feature | Description |
+|---|---|
+| 🔍 **ATS Checker** | Scores your resume for machine-readability and ATS parsing |
+| 📊 **Resume Analyzer** | Deep analysis of content, impact, and storytelling quality |
+| 🎯 **JD Match** | Compares your resume against a specific job description |
+| 🛠 **Resume Builder** | Build a professional PDF resume from scratch with live preview |
+| 🔒 **Privacy First** | Resume text is processed server-side per request — never stored |
+
+---
 
 ## Tech Stack
 
-- React 18
-- Vite 5
-- Tailwind CSS 3
-- React Router v6
-- Groq API (openai/gpt-oss-120b)
+- **Frontend** — React 18, Vite 5, Tailwind CSS 3, React Router v6
+- **Backend** — Vercel Serverless Functions (`/api/analyze.js`)
+- **AI** — [Groq API](https://groq.com) (`openai/gpt-oss-120b`)
+- **PDF Parsing** — `pdfjs-dist` (runs entirely in the browser)
 
-## Getting Started
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Start dev server
-npm run dev
-
-# 3. Open http://localhost:5173
-```
-
-## Groq API
-
-Add your key to `.env`:
-
-```env
-VITE_GROQ_API_KEY=your_groq_api_key_here
-```
+---
 
 ## Project Structure
 
 ```
-src/
-├── components/
-│   ├── layout/
-│   │   ├── AppLayout.jsx       # Main layout wrapper
-│   │   ├── ProtectedRoute.jsx  # Auth guard
-│   │   └── Sidebar.jsx         # Sidebar navigation
-│   └── ui/
-│       ├── Button.jsx
-│       ├── Card.jsx
-│       ├── Input.jsx
-│       ├── InputTabs.jsx        # Upload/Paste toggle
-│       ├── LoadingState.jsx     # Analysis loading screen
-│       ├── MetricBar.jsx        # Animated score bar
-│       ├── PageHeader.jsx
-│       ├── ResultsDashboard.jsx # Full analysis results
-│       ├── ScoreRing.jsx        # Animated SVG ring
-│       ├── ToolPage.jsx         # Shared tool page wrapper
-│       └── UploadArea.jsx       # Drag-and-drop PDF upload
-├── hooks/
-│   ├── useAuth.jsx              # Auth context
-│   └── useAnalysis.js           # Analysis stats
-├── pages/
-│   ├── About.jsx
-│   ├── AtsChecker.jsx
-│   ├── Dashboard.jsx
-│   ├── Improvements.jsx
-│   ├── JdMatch.jsx
-│   ├── Login.jsx
-│   ├── ResumeAnalyzer.jsx
-│   ├── ScoreChecker.jsx
-│   ├── SkillGap.jsx
-│   └── Signup.jsx
-├── utils/
-│   ├── api.js                   # AI API calls
-│   ├── constants.js             # Tool definitions, steps
-│   └── helpers.js               # Utility functions
-├── App.jsx
-├── main.jsx
-└── index.css
+├── api/
+│   └── analyze.js          # Vercel serverless function (Groq integration)
+├── src/
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── AppLayout.jsx
+│   │   │   └── Header.jsx
+│   │   └── ui/
+│   │       ├── AtsResults.jsx
+│   │       ├── AnalyzerResults.jsx
+│   │       ├── JdMatchResults.jsx
+│   │       ├── DateRangePicker.jsx
+│   │       ├── LoadingState.jsx
+│   │       ├── ScoreRing.jsx
+│   │       ├── ToolPage.jsx
+│   │       ├── UploadArea.jsx
+│   │       └── ...
+│   ├── pages/
+│   │   ├── Landing.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── Builder.jsx
+│   │   ├── AtsChecker.jsx
+│   │   ├── ResumeAnalyzer.jsx
+│   │   └── JdMatch.jsx
+│   ├── utils/
+│   │   ├── api.js           # Frontend fetch wrapper
+│   │   ├── validation.js    # Input & spam detection
+│   │   ├── pdfText.js       # PDF text extraction
+│   │   ├── helpers.js
+│   │   └── constants.js
+│   ├── context/
+│   │   └── ToastContext.jsx
+│   ├── hooks/
+│   │   └── useAnalysis.js
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
+├── .env.example             # Template — copy to .env for local dev
+├── vercel.json              # Vercel routing config
+└── index.html
 ```
 
-## Build for Production
+---
+
+## Local Development
 
 ```bash
-npm run build
-# Output is in /dist
+# 1. Clone and install
+git clone <your-repo-url>
+cd ResumeIQ
+npm install
+
+# 2. Set up environment
+cp .env.example .env
+# Edit .env and add your Groq API key:
+# GROQ_API_KEY=gsk_...
+
+# 3. Start local server (proxies /api/* to the serverless function)
+node server.local.js
+
+# 4. In a separate terminal, start Vite
+npm run dev
+
+# Open http://localhost:5173
 ```
+
+> **Note:** `server.local.js` is a local-only Express proxy that simulates the Vercel serverless API. It is listed in `.gitignore` and is not deployed.
+
+---
+
+## Deploying to Vercel
+
+1. Push to GitHub
+2. Import the repo on [vercel.com](https://vercel.com)
+3. In **Settings → Environment Variables**, add:
+   ```
+   GROQ_API_KEY = gsk_your_actual_key_here
+   ```
+4. Every `git push` to `main` triggers an automatic redeploy.
+
+---
+
+## Environment Variables
+
+| Variable | Where | Description |
+|---|---|---|
+| `GROQ_API_KEY` | Vercel Dashboard | Server-side API key for Groq. Never exposed to the browser. |
+
+---
 
 ## Created by
 

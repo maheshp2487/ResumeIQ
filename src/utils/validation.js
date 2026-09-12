@@ -13,24 +13,62 @@ function uniqueWordCount(text) {
   return new Set(tokenize(text)).size
 }
 
-/** Repeated same token (e.g. "hello hello hello") */
-function isDominantRepetition(text) {
+/** Repeated same token (e.g. "hello hello hello") or characters (e.g. "aaaaa") */
+export function isDominantRepetition(text) {
+  if (!text) return false
+  const t = text.trim()
+  
+  // Single char repeated 4+ times
+  if (/^(.)\1{3,}$/i.test(t)) return true
+  // Short pattern repeated (e.g. abcabcabc)
+  if (/^(.{2,4})\1{2,}$/i.test(t)) return true
+
   const tokens = tokenize(text)
   if (tokens.length < 4) return false
   const counts = {}
-  for (const t of tokens) {
-    counts[t] = (counts[t] || 0) + 1
+  for (const token of tokens) {
+    counts[token] = (counts[token] || 0) + 1
   }
   const max = Math.max(...Object.values(counts))
   return max / tokens.length > 0.45
 }
 
-/** Looks like keyboard mashing: many long nonsense tokens */
-function looksLikeKeyboardSpam(text) {
+/** Looks like keyboard mashing: many long nonsense tokens or no vowels */
+export function looksLikeKeyboardSpam(text) {
+  if (!text) return false
+  const t = text.trim()
+  
+  // Single word keyboard mash (no vowels, long)
+  if (t.length >= 6 && !/[aeiouy]/i.test(t)) return true
+
   const tokens = tokenize(text)
   if (tokens.length === 0) return true
-  const suspicious = tokens.filter(t => t.length >= 8 && !/[aeiou]/i.test(t)).length
-  return suspicious / tokens.length > 0.35 && tokens.length >= 3
+  const suspicious = tokens.filter(tok => tok.length >= 8 && !/[aeiouy]/i.test(tok)).length
+  return suspicious / tokens.length > 0.35 && tokens.length >= 2
+}
+
+/**
+ * Checks if a short user input looks like spam/keyboard mash.
+ * - Allows genuine uppercase acronyms ≤4 chars (IIT, MIT, VIT, SRM, UCLA)
+ * - Rejects all-same-char strings
+ * - Rejects 3+ char strings with zero vowels (dcd, sxsa, bcdf)
+ * - Rejects dominant repetition
+ */
+export function isSpamInput(text) {
+  if (!text) return false
+  const t = text.trim()
+  if (t.length < 2) return true
+
+  // All same characters: aaaa, dddd, 1111
+  if (/^(.)\1+$/i.test(t)) return true
+
+  // Allow known-pattern uppercase acronyms ≤4 chars: IIT, MIT, VIT, SRM, UCLA, NIT
+  if (t.length <= 4 && /^[A-Z0-9]+$/.test(t)) return false
+
+  // No vowels at all in 3+ char strings = keyboard spam (dcd, sxsa, bcdf, qwrt)
+  if (t.length >= 3 && !/[aeiouy]/i.test(t)) return true
+
+  return isDominantRepetition(t)
 }
 
 /**
@@ -55,11 +93,10 @@ function hasResumeLikeSignals(text) {
 function hasJobLikeSignals(text) {
   const t = text.toLowerCase()
   const blobSignals = [
-    /\b(intern|internship|full[\s-]?time|part[\s-]?time|contract|remote|hybrid)\b/i.test(t),
-    /\b(requirement|responsibilit|qualification|experience with|must have|nice to have|preferred)\b/i.test(t),
-    /\b(we are|you will|looking for|join (our|the) team)\b/i.test(t),
-    /\b(react|python|aws|docker|kubernetes|sql)\b/i.test(t),
-    /\$\d|\b(salary|compensation)\b/i.test(t),
+    /\b(intern|internship|full[\s-]?time|part[\s-]?time|contract|remote|hybrid|on[\s-]?site)\b/i.test(t),
+    /\b(requirement(s)?|responsibilit(y|ies)|qualification(s)?|experience|must have|nice to have|preferred|proficient)\b/i.test(t),
+    /\b(we are|you will|looking for|join (our|the) team|apply)\b/i.test(t),
+    /\b(skills|degree|bachelor|master|role|duties|description|benefits|salary|compensation)\b/i.test(t)
   ]
   return blobSignals.filter(Boolean).length >= 1
 }
@@ -110,17 +147,18 @@ export function validateAnalysisInputs({ resumeText, jdText, needsJD }) {
 
   if (needsJD) {
     if (!jd.length) {
-      return { ok: false, message: 'Job description too short' }
+      return { ok: false, message: 'Please provide a job description' }
     }
     if (isJunkOrSpam(jd)) {
-      return { ok: false, message: 'Job description too short' }
+      return { ok: false, message: 'Job description content is invalid or too short' }
     }
-    const jdLongEnough =
-      jd.length >= MIN_JD_CHARS ||
-      (jd.length >= MIN_JD_CHARS_WITH_SIGNALS && hasJobLikeSignals(jd))
+    
+    if (!hasJobLikeSignals(jd)) {
+      return { ok: false, message: 'Please provide a valid job description. The pasted text does not appear to be a real job posting.' }
+    }
 
-    if (!jdLongEnough) {
-      return { ok: false, message: 'Job description too short' }
+    if (jd.length < MIN_JD_CHARS) {
+      return { ok: false, message: 'Job description is too short to provide accurate matching' }
     }
   }
 
