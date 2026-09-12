@@ -103,11 +103,17 @@ export default function Builder() {
     document.body.appendChild(printContainer)
     document.body.classList.add('is-printing')
 
+    const originalTitle = document.title
+    document.title = `${data.profile.name?.trim() || 'Resume'} - ResumeIQ`
+
     setTimeout(() => {
       window.print()
-      document.body.removeChild(printContainer)
+      if (document.body.contains(printContainer)) {
+        document.body.removeChild(printContainer)
+      }
       document.body.classList.remove('is-printing')
-    }, 500)
+      document.title = originalTitle
+    }, 400)
   }
 
   const handleBlurSpamCheck = (e, fieldName) => {
@@ -461,33 +467,33 @@ export default function Builder() {
 
   // --- Renderers for Templates ---
   const ProfessionalTemplate = () => (
-    <div className="p-8 bg-white text-black min-h-[800px] shadow-sm rounded-lg font-sans">
-      <div className="text-center border-b-2 border-gray-300 pb-4 mb-4">
-        <h1 className="text-3xl font-bold uppercase tracking-widest text-gray-900">{data.profile.name || 'Your Name'}</h1>
-        <p className="text-lg text-gray-600 mt-1">{data.profile.title}</p>
-        <div className="text-sm text-gray-500 mt-2 flex justify-center gap-4 flex-wrap">
+    <div className="p-6 sm:p-8 bg-white text-black min-h-[800px] print:min-h-0 print:p-6 shadow-sm rounded-lg font-sans">
+      <div className="text-center border-b-2 border-gray-300 pb-3 mb-3">
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-widest text-gray-900">{data.profile.name || 'Your Name'}</h1>
+        <p className="text-base sm:text-lg text-gray-600 mt-0.5">{data.profile.title}</p>
+        <div className="text-xs sm:text-sm text-gray-500 mt-1.5 flex justify-center gap-3 flex-wrap">
           <span>{data.profile.email}</span> • <span>{data.profile.phone}</span> • <span>{data.profile.location}</span>
         </div>
       </div>
       
       {data.profile.summary && (
-        <div className="mb-6">
-          <p className="text-sm leading-relaxed text-gray-800">{data.profile.summary}</p>
+        <div className="mb-4">
+          <p className="text-xs sm:text-sm leading-relaxed text-gray-800">{data.profile.summary}</p>
         </div>
       )}
 
       {data.experience.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold uppercase text-gray-900 border-b border-gray-300 mb-3">Experience</h2>
-          <div className="space-y-4">
+        <div className="mb-4">
+          <h2 className="text-sm sm:text-base font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2">Experience</h2>
+          <div className="space-y-3">
             {data.experience.map(exp => (
               <div key={exp.id}>
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h3 className="font-bold text-gray-900">{exp.company}</h3>
-                  <span className="text-sm text-gray-600 font-medium whitespace-nowrap flex-shrink-0">{exp.date}</span>
+                <div className="flex items-start justify-between gap-2 mb-0.5">
+                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm">{exp.company}</h3>
+                  <span className="text-xs text-gray-600 font-medium whitespace-nowrap flex-shrink-0">{exp.date}</span>
                 </div>
-                <p className="text-sm italic text-gray-700 mb-2">{exp.role}</p>
-                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{exp.desc}</p>
+                <p className="text-xs italic text-gray-700 mb-1">{exp.role}</p>
+                <p className="text-xs text-gray-800 leading-relaxed whitespace-pre-line">{exp.desc}</p>
               </div>
             ))}
           </div>
@@ -495,16 +501,16 @@ export default function Builder() {
       )}
 
       {data.education.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold uppercase text-gray-900 border-b border-gray-300 mb-3">Education</h2>
-          <div className="space-y-3">
+        <div className="mb-4">
+          <h2 className="text-sm sm:text-base font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2">Education</h2>
+          <div className="space-y-2.5">
             {data.education.map(edu => (
               <div key={edu.id} className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h3 className="font-bold text-gray-900 truncate">{edu.school}</h3>
-                  <p className="text-sm text-gray-700">{edu.degree}</p>
+                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm truncate">{edu.school}</h3>
+                  <p className="text-xs text-gray-700">{edu.degree}</p>
                 </div>
-                <span className="text-sm text-gray-600 font-medium whitespace-nowrap flex-shrink-0 mt-0.5">{edu.date}</span>
+                <span className="text-xs text-gray-600 font-medium whitespace-nowrap flex-shrink-0 mt-0.5">{edu.date}</span>
               </div>
             ))}
           </div>
@@ -513,63 +519,63 @@ export default function Builder() {
 
       {data.skills && (
         <div>
-          <h2 className="text-lg font-bold uppercase text-gray-900 border-b border-gray-300 mb-3">Skills</h2>
-          <p className="text-sm text-gray-800 leading-relaxed">{data.skills}</p>
+          <h2 className="text-sm sm:text-base font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2">Skills</h2>
+          <p className="text-xs text-gray-800 leading-relaxed">{data.skills}</p>
         </div>
       )}
     </div>
   )
 
   const ModernTemplate = () => (
-    <div className="bg-white text-gray-900 min-h-[800px] shadow-sm rounded-lg overflow-hidden font-sans">
+    <div className="bg-white text-gray-900 min-h-[800px] print:min-h-0 shadow-sm rounded-lg overflow-hidden font-sans">
       {/* Header Block */}
-      <div className="bg-slate-800 px-10 py-12 text-white">
-        <h1 className="text-4xl font-black tracking-tight mb-2">{data.profile.name || 'Your Name'}</h1>
-        <p className="text-xl font-medium text-slate-300 mb-6">{data.profile.title}</p>
+      <div className="bg-slate-800 px-8 py-7 print:px-6 print:py-5 text-white">
+        <h1 className="text-3xl font-black tracking-tight mb-1">{data.profile.name || 'Your Name'}</h1>
+        <p className="text-lg font-medium text-slate-300 mb-3">{data.profile.title}</p>
         
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400 font-medium">
-          {data.profile.email && <div className="flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>{data.profile.email}</div>}
-          {data.profile.phone && <div className="flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>{data.profile.phone}</div>}
-          {data.profile.location && <div className="flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>{data.profile.location}</div>}
+        <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-slate-400 font-medium">
+          {data.profile.email && <div className="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>{data.profile.email}</div>}
+          {data.profile.phone && <div className="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>{data.profile.phone}</div>}
+          {data.profile.location && <div className="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>{data.profile.location}</div>}
         </div>
       </div>
       
-      <div className="p-10 space-y-8">
+      <div className="p-6 sm:p-8 print:p-6 space-y-4">
         {data.profile.summary && (
           <div>
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2 mb-4">Profile</h2>
-            <p className="text-gray-600 leading-relaxed text-sm">{data.profile.summary}</p>
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-1.5 mb-2">Profile</h2>
+            <p className="text-gray-600 leading-relaxed text-xs sm:text-sm">{data.profile.summary}</p>
           </div>
         )}
 
         {data.experience.length > 0 && (
           <div>
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2 mb-4">Experience</h2>
-            <div className="space-y-6">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-1.5 mb-2">Experience</h2>
+            <div className="space-y-3">
               {data.experience.map(exp => (
                 <div key={exp.id}>
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h3 className="font-bold text-slate-900">{exp.role}</h3>
+                  <div className="flex justify-between items-baseline mb-0.5">
+                    <h3 className="font-bold text-slate-900 text-sm">{exp.role}</h3>
                     <span className="text-xs font-bold text-slate-500">{exp.date}</span>
                   </div>
-                  <p className="text-sm font-medium text-slate-700 mb-2">{exp.company}</p>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{exp.desc}</p>
+                  <p className="text-xs font-medium text-slate-700 mb-1">{exp.company}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{exp.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 gap-6">
           {data.education.length > 0 && (
             <div>
-              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2 mb-4">Education</h2>
-              <div className="space-y-4">
+              <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-1.5 mb-2">Education</h2>
+              <div className="space-y-2.5">
                 {data.education.map(edu => (
                   <div key={edu.id}>
-                    <h3 className="font-bold text-slate-900 text-sm">{edu.degree}</h3>
-                    <p className="text-sm text-slate-700">{edu.school}</p>
-                    <p className="text-xs text-slate-500 mt-1">{edu.date}</p>
+                    <h3 className="font-bold text-slate-900 text-xs sm:text-sm">{edu.degree}</h3>
+                    <p className="text-xs text-slate-700">{edu.school}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{edu.date}</p>
                   </div>
                 ))}
               </div>
@@ -578,10 +584,10 @@ export default function Builder() {
 
           {data.skills && (
             <div>
-              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-2 mb-4">Skills</h2>
-              <div className="flex flex-wrap gap-2">
+              <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b-2 border-slate-100 pb-1.5 mb-2">Skills</h2>
+              <div className="flex flex-wrap gap-1.5">
                 {data.skills.split(',').map((s, i) => s.trim() && (
-                  <span key={i} className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-full">{s.trim()}</span>
+                  <span key={i} className="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-full">{s.trim()}</span>
                 ))}
               </div>
             </div>
@@ -592,49 +598,49 @@ export default function Builder() {
   )
 
   const ExecutiveTemplate = () => (
-    <div className="p-8 bg-[#fafafa] text-[#111] min-h-[800px] shadow-sm rounded-lg font-serif border-t-8 border-[#111]">
-      <div className="mb-8">
-        <h1 className="text-4xl font-normal text-[#111] tracking-tight">{data.profile.name || 'Your Name'}</h1>
-        <p className="text-md text-[#444] mt-1 font-sans">{data.profile.title}</p>
-        <div className="text-sm text-[#666] mt-3 font-sans space-x-3">
+    <div className="p-6 sm:p-8 bg-[#fafafa] text-[#111] min-h-[800px] print:min-h-0 print:p-6 shadow-sm rounded-lg font-serif border-t-8 border-[#111]">
+      <div className="mb-4">
+        <h1 className="text-3xl font-normal text-[#111] tracking-tight">{data.profile.name || 'Your Name'}</h1>
+        <p className="text-sm text-[#444] mt-0.5 font-sans">{data.profile.title}</p>
+        <div className="text-xs text-[#666] mt-2 font-sans space-x-2">
           <span>{data.profile.email}</span> | <span>{data.profile.phone}</span> | <span>{data.profile.location}</span>
         </div>
       </div>
       
       {data.profile.summary && (
-        <div className="mb-8">
-          <p className="text-sm leading-relaxed text-[#333] font-sans">{data.profile.summary}</p>
+        <div className="mb-4">
+          <p className="text-xs sm:text-sm leading-relaxed text-[#333] font-sans">{data.profile.summary}</p>
         </div>
       )}
 
       {data.experience.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#111] border-b border-[#ddd] pb-2 mb-4 font-sans">Professional Experience</h2>
-          <div className="space-y-6">
+        <div className="mb-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#111] border-b border-[#ddd] pb-1 mb-2.5 font-sans">Professional Experience</h2>
+          <div className="space-y-3">
             {data.experience.map(exp => (
               <div key={exp.id}>
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="font-bold text-[#111] text-lg">{exp.company}</h3>
-                  <span className="text-sm text-[#555] font-sans">{exp.date}</span>
+                <div className="flex justify-between items-baseline mb-0.5">
+                  <h3 className="font-bold text-[#111] text-sm sm:text-base">{exp.company}</h3>
+                  <span className="text-xs text-[#555] font-sans">{exp.date}</span>
                 </div>
-                <p className="text-sm font-semibold text-[#333] mb-2 font-sans">{exp.role}</p>
-                <p className="text-sm text-[#444] leading-relaxed whitespace-pre-line font-sans">{exp.desc}</p>
+                <p className="text-xs font-semibold text-[#333] mb-1 font-sans">{exp.role}</p>
+                <p className="text-xs text-[#444] leading-relaxed whitespace-pre-line font-sans">{exp.desc}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-2 gap-6">
         {data.education.length > 0 && (
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#111] border-b border-[#ddd] pb-2 mb-4 font-sans">Education</h2>
-            <div className="space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#111] border-b border-[#ddd] pb-1 mb-2.5 font-sans">Education</h2>
+            <div className="space-y-2.5">
               {data.education.map(edu => (
                 <div key={edu.id}>
-                  <h3 className="font-bold text-[#111]">{edu.school}</h3>
-                  <p className="text-sm text-[#333] font-sans">{edu.degree}</p>
-                  <p className="text-xs text-[#666] font-sans">{edu.date}</p>
+                  <h3 className="font-bold text-[#111] text-xs sm:text-sm">{edu.school}</h3>
+                  <p className="text-xs text-[#333] font-sans">{edu.degree}</p>
+                  <p className="text-[11px] text-[#666] font-sans">{edu.date}</p>
                 </div>
               ))}
             </div>
@@ -643,8 +649,8 @@ export default function Builder() {
 
         {data.skills && (
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#111] border-b border-[#ddd] pb-2 mb-4 font-sans">Core Competencies</h2>
-            <ul className="list-disc list-inside text-sm text-[#444] font-sans leading-relaxed">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#111] border-b border-[#ddd] pb-1 mb-2.5 font-sans">Core Competencies</h2>
+            <ul className="list-disc list-inside text-xs text-[#444] font-sans leading-relaxed">
               {data.skills.split(',').map((s, i) => s.trim() && <li key={i}>{s.trim()}</li>)}
             </ul>
           </div>
@@ -654,10 +660,10 @@ export default function Builder() {
   )
 
   const MinimalistTemplate = () => (
-    <div className="p-10 bg-white text-gray-900 min-h-[800px] shadow-sm rounded-lg font-sans tracking-wide">
-      <div className="mb-12">
-        <h1 className="text-3xl font-light text-gray-900 mb-2">{data.profile.name || 'Your Name'}</h1>
-        <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500 uppercase tracking-widest">
+    <div className="p-6 sm:p-8 bg-white text-gray-900 min-h-[800px] print:min-h-0 print:p-6 shadow-sm rounded-lg font-sans tracking-wide">
+      <div className="mb-5">
+        <h1 className="text-3xl font-light text-gray-900 mb-1">{data.profile.name || 'Your Name'}</h1>
+        <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-gray-500 uppercase tracking-widest">
           <span>{data.profile.title}</span>
           {data.profile.title && <span>•</span>}
           <span>{data.profile.location}</span>
@@ -669,22 +675,22 @@ export default function Builder() {
       </div>
       
       {data.profile.summary && (
-        <div className="mb-10">
-          <p className="text-sm leading-relaxed text-gray-600 font-light">{data.profile.summary}</p>
+        <div className="mb-4">
+          <p className="text-xs sm:text-sm leading-relaxed text-gray-600 font-light">{data.profile.summary}</p>
         </div>
       )}
 
       {data.experience.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-900 mb-6">Experience</h2>
-          <div className="space-y-8">
+        <div className="mb-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-900 mb-2.5">Experience</h2>
+          <div className="space-y-3">
             {data.experience.map(exp => (
-              <div key={exp.id} className="grid grid-cols-12 gap-4">
-                <div className="col-span-3 text-xs text-gray-400 font-medium mt-1 uppercase">{exp.date}</div>
+              <div key={exp.id} className="grid grid-cols-12 gap-3">
+                <div className="col-span-3 text-[11px] text-gray-400 font-medium mt-0.5 uppercase">{exp.date}</div>
                 <div className="col-span-9">
-                  <h3 className="font-semibold text-gray-900 text-sm">{exp.company}</h3>
-                  <p className="text-xs text-gray-500 mb-3">{exp.role}</p>
-                  <p className="text-sm text-gray-600 font-light leading-relaxed whitespace-pre-line">{exp.desc}</p>
+                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">{exp.company}</h3>
+                  <p className="text-[11px] text-gray-500 mb-1">{exp.role}</p>
+                  <p className="text-xs text-gray-600 font-light leading-relaxed whitespace-pre-line">{exp.desc}</p>
                 </div>
               </div>
             ))}
@@ -693,15 +699,15 @@ export default function Builder() {
       )}
 
       {data.education.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-900 mb-6">Education</h2>
-          <div className="space-y-6">
+        <div className="mb-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-900 mb-2.5">Education</h2>
+          <div className="space-y-2.5">
             {data.education.map(edu => (
-              <div key={edu.id} className="grid grid-cols-12 gap-4">
-                <div className="col-span-3 text-xs text-gray-400 font-medium mt-1 uppercase">{edu.date}</div>
+              <div key={edu.id} className="grid grid-cols-12 gap-3">
+                <div className="col-span-3 text-[11px] text-gray-400 font-medium mt-0.5 uppercase">{edu.date}</div>
                 <div className="col-span-9">
-                  <h3 className="font-semibold text-gray-900 text-sm">{edu.school}</h3>
-                  <p className="text-xs text-gray-500">{edu.degree}</p>
+                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">{edu.school}</h3>
+                  <p className="text-[11px] text-gray-500">{edu.degree}</p>
                 </div>
               </div>
             ))}
@@ -711,73 +717,73 @@ export default function Builder() {
 
       {data.skills && (
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-900 mb-4">Skills</h2>
-          <p className="text-sm text-gray-600 font-light leading-relaxed">{data.skills}</p>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-900 mb-2">Skills</h2>
+          <p className="text-xs text-gray-600 font-light leading-relaxed">{data.skills}</p>
         </div>
       )}
     </div>
   )
 
   const CreativeTemplate = () => (
-    <div className="flex bg-white text-gray-900 min-h-[800px] shadow-sm rounded-lg overflow-hidden font-sans">
-      <div className="w-1/3 bg-indigo-900 text-indigo-50 p-8">
-        <div className="w-24 h-24 rounded-full bg-indigo-400/30 flex items-center justify-center text-3xl font-black text-white mb-6">
+    <div className="flex bg-white text-gray-900 min-h-[800px] print:min-h-0 shadow-sm rounded-lg overflow-hidden font-sans">
+      <div className="w-1/3 bg-indigo-900 text-indigo-50 p-6 print:p-5">
+        <div className="w-16 h-16 rounded-full bg-indigo-400/30 flex items-center justify-center text-2xl font-black text-white mb-4">
           {(data.profile.name || 'YN').substring(0,2).toUpperCase()}
         </div>
-        <h1 className="text-2xl font-bold text-white leading-tight mb-2">{data.profile.name || 'Your Name'}</h1>
-        <p className="text-sm font-medium text-indigo-300 mb-8">{data.profile.title}</p>
+        <h1 className="text-2xl font-bold text-white leading-tight mb-1">{data.profile.name || 'Your Name'}</h1>
+        <p className="text-xs font-medium text-indigo-300 mb-5">{data.profile.title}</p>
         
-        <div className="space-y-4 mb-10 text-sm text-indigo-200">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Email</span>
+        <div className="space-y-2.5 mb-5 text-xs text-indigo-200">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Email</span>
             <span className="break-all">{data.profile.email}</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Phone</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Phone</span>
             <span>{data.profile.phone}</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Location</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Location</span>
             <span>{data.profile.location}</span>
           </div>
         </div>
 
         {data.skills && (
           <div>
-            <h2 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Expertise</h2>
-            <div className="flex flex-col gap-2">
+            <h2 className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Expertise</h2>
+            <div className="flex flex-col gap-1.5">
               {data.skills.split(',').map((s, i) => s.trim() && (
-                <div key={i} className="text-sm font-medium bg-indigo-800/50 px-3 py-1.5 rounded-lg border border-indigo-700/50">{s.trim()}</div>
+                <div key={i} className="text-xs font-medium bg-indigo-800/50 px-2.5 py-1 rounded-lg border border-indigo-700/50">{s.trim()}</div>
               ))}
             </div>
           </div>
         )}
       </div>
 
-      <div className="w-2/3 p-10 bg-gray-50">
+      <div className="w-2/3 p-6 print:p-5 bg-gray-50">
         {data.profile.summary && (
-          <div className="mb-10 relative">
-            <div className="absolute -left-4 top-0 bottom-0 w-1 bg-indigo-500 rounded-full"></div>
-            <p className="text-sm leading-relaxed text-gray-600 font-medium italic">{data.profile.summary}</p>
+          <div className="mb-4 relative">
+            <div className="absolute -left-3 top-0 bottom-0 w-1 bg-indigo-500 rounded-full"></div>
+            <p className="text-xs sm:text-sm leading-relaxed text-gray-600 font-medium italic">{data.profile.summary}</p>
           </div>
         )}
 
         {data.experience.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <div className="mb-4">
+            <h2 className="text-base font-bold text-gray-900 mb-2.5 flex items-center gap-1.5">
               <span className="text-indigo-500">•</span> Experience
             </h2>
-            <div className="space-y-8 relative before:absolute before:inset-0 before:ml-1.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+            <div className="space-y-3 relative">
               {data.experience.map(exp => (
-                <div key={exp.id} className="relative pl-6 border-l-2 border-indigo-200">
+                <div key={exp.id} className="relative pl-4 border-l-2 border-indigo-200">
                   <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-indigo-500"></div>
-                  <h3 className="font-bold text-gray-900">{exp.role}</h3>
-                  <div className="flex items-center gap-2 mb-3">
-                    <p className="text-sm font-semibold text-indigo-600">{exp.company}</p>
+                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm">{exp.role}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs font-semibold text-indigo-600">{exp.company}</p>
                     <span className="text-xs text-gray-400">•</span>
-                    <span className="text-xs font-medium text-gray-500">{exp.date}</span>
+                    <span className="text-[11px] font-medium text-gray-500">{exp.date}</span>
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{exp.desc}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{exp.desc}</p>
                 </div>
               ))}
             </div>
@@ -786,15 +792,15 @@ export default function Builder() {
 
         {data.education.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <h2 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-1.5">
               <span className="text-indigo-500">•</span> Education
             </h2>
-            <div className="grid gap-6">
+            <div className="grid gap-2.5">
               {data.education.map(edu => (
-                <div key={edu.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                  <h3 className="font-bold text-gray-900 text-sm">{edu.degree}</h3>
-                  <p className="text-sm text-indigo-600 font-medium mb-1">{edu.school}</p>
-                  <p className="text-xs text-gray-400 font-medium">{edu.date}</p>
+                <div key={edu.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm">{edu.degree}</h3>
+                  <p className="text-xs text-indigo-600 font-medium">{edu.school}</p>
+                  <p className="text-[11px] text-gray-400 font-medium">{edu.date}</p>
                 </div>
               ))}
             </div>
@@ -805,10 +811,10 @@ export default function Builder() {
   )
 
   const TechTemplate = () => (
-    <div className="p-8 bg-white text-gray-900 min-h-[800px] shadow-sm rounded-lg font-sans text-[13px] leading-relaxed">
-      <div className="border-b-2 border-gray-900 pb-4 mb-5 text-center">
-        <h1 className="text-3xl font-bold uppercase tracking-tight text-gray-900 mb-1">{data.profile.name || 'Your Name'}</h1>
-        <div className="flex flex-wrap items-center justify-center gap-3 text-gray-600 font-medium">
+    <div className="p-6 sm:p-8 bg-white text-gray-900 min-h-[800px] print:min-h-0 print:p-6 shadow-sm rounded-lg font-sans text-xs leading-relaxed">
+      <div className="border-b-2 border-gray-900 pb-3 mb-3.5 text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-gray-900 mb-1">{data.profile.name || 'Your Name'}</h1>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-gray-600 font-medium text-xs">
           <span>{data.profile.email}</span>
           {data.profile.email && <span>|</span>}
           <span>{data.profile.phone}</span>
@@ -817,12 +823,12 @@ export default function Builder() {
         </div>
       </div>
       
-      <div className="grid grid-cols-3 gap-8">
-        <div className="col-span-1 space-y-6">
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-1 space-y-4">
           {data.skills && (
             <div>
-              <h2 className="text-sm font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-3 tracking-wider">Technical Skills</h2>
-              <div className="flex flex-col gap-1.5 text-gray-700">
+              <h2 className="text-xs font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2 tracking-wider">Technical Skills</h2>
+              <div className="flex flex-col gap-1 text-gray-700">
                 {data.skills.split(',').map((s, i) => s.trim() && (
                   <span key={i}>• {s.trim()}</span>
                 ))}
@@ -832,13 +838,13 @@ export default function Builder() {
 
           {data.education.length > 0 && (
             <div>
-              <h2 className="text-sm font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-3 tracking-wider">Education</h2>
-              <div className="space-y-4">
+              <h2 className="text-xs font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2 tracking-wider">Education</h2>
+              <div className="space-y-2.5">
                 {data.education.map(edu => (
                   <div key={edu.id}>
-                    <h3 className="font-bold text-gray-900">{edu.school}</h3>
-                    <p className="text-gray-700 font-medium">{edu.degree}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">{edu.date}</p>
+                    <h3 className="font-bold text-gray-900 text-xs">{edu.school}</h3>
+                    <p className="text-gray-700 font-medium text-[11px]">{edu.degree}</p>
+                    <p className="text-gray-500 text-[10px] mt-0.5">{edu.date}</p>
                   </div>
                 ))}
               </div>
@@ -846,26 +852,26 @@ export default function Builder() {
           )}
         </div>
 
-        <div className="col-span-2 space-y-6">
+        <div className="col-span-2 space-y-4">
           {data.profile.summary && (
             <div>
-              <h2 className="text-sm font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-3 tracking-wider">Summary</h2>
-              <p className="text-gray-700 text-justify">{data.profile.summary}</p>
+              <h2 className="text-xs font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2 tracking-wider">Summary</h2>
+              <p className="text-gray-700 text-justify text-xs">{data.profile.summary}</p>
             </div>
           )}
 
           {data.experience.length > 0 && (
             <div>
-              <h2 className="text-sm font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-3 tracking-wider">Experience</h2>
-              <div className="space-y-6">
+              <h2 className="text-xs font-bold uppercase text-gray-900 border-b border-gray-300 pb-1 mb-2 tracking-wider">Experience</h2>
+              <div className="space-y-3">
                 {data.experience.map(exp => (
                   <div key={exp.id}>
                     <div className="flex justify-between items-baseline mb-0.5">
-                      <h3 className="font-bold text-gray-900 text-sm">{exp.company}</h3>
-                      <span className="text-gray-600 text-xs font-bold bg-gray-100 px-2 py-0.5 rounded">{exp.date}</span>
+                      <h3 className="font-bold text-gray-900 text-xs">{exp.company}</h3>
+                      <span className="text-gray-600 text-[10px] font-bold bg-gray-100 px-1.5 py-0.5 rounded">{exp.date}</span>
                     </div>
-                    <p className="text-gray-800 font-bold italic mb-2">{exp.role}</p>
-                    <div className="text-gray-700 whitespace-pre-line text-justify">
+                    <p className="text-gray-800 font-bold italic mb-1 text-xs">{exp.role}</p>
+                    <div className="text-gray-700 whitespace-pre-line text-justify text-xs">
                       {exp.desc}
                     </div>
                   </div>

@@ -48,7 +48,7 @@ export default function ToolPage({ tool }) {
       const { text: resumeContent } = await extractPdfText(resumeFile)
       
       if (!resumeContent.trim()) {
-        throw new Error('Could not extract text from the provided resume.')
+        throw new Error('Could not extract text from the provided PDF. If your resume is a scanned image or photo, please upload a text-based PDF.')
       }
 
       const jdContent = tool.needsJD ? jdText.trim() : ''

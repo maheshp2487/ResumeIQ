@@ -173,98 +173,66 @@ export function isSpamPhrase(text) {
   return false
 }
 
+
+
 /**
- * Weak signal but still "content" — not spam.
- * Beginner resumes often lack traditional section headers.
+ * Checks if a full document (resume text or job description) is pure junk/spam:
+ * - Empty or near-empty (< 20 chars or < 3 words)
+ * - Has no vowels at all (random consonants/symbols)
+ * - Single word/character repeating over and over (e.g. "aaaaa" or "spam spam spam")
+ * - Unnaturally low vocabulary variety (e.g. 200 chars but only 2 unique words)
  */
-function hasResumeLikeSignals(text) {
-  const t = text.toLowerCase()
-  const blobSignals = [
-    /\b(react|vue|angular|node|javascript|typescript|python|java|sql|tailwind|css|html)\b/i.test(t),
-    /\b(intern|internship|freelance|freelancer|student|university|college|bootcamp)\b/i.test(t),
-    /\b(project|portfolio|github|website|app|built|developed)\b/i.test(t),
-    /\b(skill|experience|education|summary|objective|work)\b/i.test(t),
-    /\b(engineer|developer|designer|analyst)\b/i.test(t),
-    /@/.test(t),
-    /\b(20\d{2}|19\d{2})\b/.test(t),
-    /\b(work|employment|job|role|company|employer|created|managed|responsible|assisted)\b/i.test(t),
-  ]
-  return blobSignals.filter(Boolean).length >= 1
-}
-
-function hasJobLikeSignals(text) {
-  const t = text.toLowerCase()
-  const blobSignals = [
-    /\b(intern|internship|full[\s-]?time|part[\s-]?time|contract|remote|hybrid|on[\s-]?site)\b/i.test(t),
-    /\b(requirement(s)?|responsibilit(y|ies)|qualification(s)?|experience|must have|nice to have|preferred|proficient)\b/i.test(t),
-    /\b(we are|you will|looking for|join (our|the) team|apply)\b/i.test(t),
-    /\b(skills|degree|bachelor|master|role|duties|description|benefits|salary|compensation)\b/i.test(t)
-  ]
-  return blobSignals.filter(Boolean).length >= 1
-}
-
-function isJunkOrSpam(text) {
+export function isDocumentSpam(text) {
   const t = normalizeText(text)
-  if (!t.length) return true
-  // Single token junk
-  if (/^[a-z]$/i.test(t) && t.length <= 2) return true
+  if (!t || t.length < 20) return true
+
   const tokens = tokenize(t)
+  if (tokens.length < 3) return true
 
-  if (tokens.length <= 1 && t.length < 25) return true
+  // If text is 20+ chars but has ZERO vowels, it's unpronounceable gibberish
+  if (!/[aeiou]/i.test(t)) return true
+
+  // Dominant repetition (e.g. same word/character repeated overwhelmingly)
   if (isDominantRepetition(t)) return true
-  if (looksLikeKeyboardSpam(t)) return true
 
+  // Very low vocabulary variety for its length
   const uniq = uniqueWordCount(t)
-  // Very low variety relative to length — likely spam or nonsense
-  if (t.length > 120 && uniq < 4) return true
-  if (t.length > 40 && uniq <= 2) return true
+  if (t.length > 80 && uniq < 3) return true
+  if (t.length > 200 && uniq < 5) return true
 
   return false
 }
 
-const MIN_RESUME_CHARS = 80
-const MIN_RESUME_CHARS_WITH_SIGNALS = 45
-const MIN_JD_CHARS = 80
-const MIN_JD_CHARS_WITH_SIGNALS = 45
-
 export function validateAnalysisInputs({ resumeText, jdText, needsJD }) {
   const resume = normalizeText(resumeText)
-  const jd = normalizeText(jdText)
 
-  if (!resume.length) {
-    return { ok: false, message: 'Please upload a valid resume' }
+  // 1. Resume validation
+  if (!resume || resume.length === 0) {
+    return { ok: false, message: 'Please upload a PDF containing readable text.' }
   }
 
-  if (isJunkOrSpam(resume)) {
-    return { ok: false, message: 'Insufficient content for analysis' }
+  if (resume.length < 30 || tokenize(resume).length < 4) {
+    return { ok: false, message: 'The uploaded resume is too short for analysis. Please upload a complete resume.' }
   }
 
-  const resumeLongEnough =
-    resume.length >= MIN_RESUME_CHARS ||
-    (resume.length >= MIN_RESUME_CHARS_WITH_SIGNALS && hasResumeLikeSignals(resume))
-
-  if (!resumeLongEnough) {
-    return { ok: false, message: 'Insufficient content for analysis' }
+  if (isDocumentSpam(resume)) {
+    return { ok: false, message: 'The uploaded resume does not contain enough recognizable content for analysis.' }
   }
 
+  // 2. Job description validation (only for JD Match tool)
   if (needsJD) {
-    if (!jd.length) {
-      return { ok: false, message: 'Please provide a job description' }
-    }
-    if (isJunkOrSpam(jd)) {
-      return { ok: false, message: 'Job description content is invalid or too short' }
-    }
-    
-    if (!hasJobLikeSignals(jd)) {
-      return { ok: false, message: 'Please provide a valid job description. The pasted text does not appear to be a real job posting.' }
+    const jd = normalizeText(jdText)
+
+    if (!jd || jd.length === 0) {
+      return { ok: false, message: 'Please paste the target job description to continue.' }
     }
 
-    const jdLongEnough =
-      jd.length >= MIN_JD_CHARS ||
-      (jd.length >= MIN_JD_CHARS_WITH_SIGNALS && hasJobLikeSignals(jd))
+    if (jd.length < 25 || tokenize(jd).length < 3) {
+      return { ok: false, message: 'The job description is too short. Please provide a more detailed job posting.' }
+    }
 
-    if (!jdLongEnough) {
-      return { ok: false, message: 'Job description is too short to provide accurate matching' }
+    if (isDocumentSpam(jd)) {
+      return { ok: false, message: 'The job description does not appear to contain valid text. Please paste a real job posting.' }
     }
   }
 
