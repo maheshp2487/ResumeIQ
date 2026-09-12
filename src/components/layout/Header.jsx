@@ -1,14 +1,32 @@
-import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { TOOLS } from '../../utils/constants'
 import AboutModal from '../ui/AboutModal'
 
 export default function Header() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isAboutOpen, setIsAboutOpen] = useState(false)
 
   const closeMenu = () => setMobileMenuOpen(false)
+
+  // Close menu on route change
+  useEffect(() => {
+    closeMenu()
+  }, [location.pathname])
+
+  // Close menu when user scrolls more than 10px
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    let startY = window.scrollY
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - startY) > 10) closeMenu()
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [mobileMenuOpen])
+
 
   return (
     <header className="sticky top-0 z-[100] w-full border-b border-border bg-bg-secondary/80 backdrop-blur-md shadow-sm transition-colors duration-300">

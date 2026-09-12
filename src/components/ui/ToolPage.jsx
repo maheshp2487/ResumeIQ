@@ -23,22 +23,22 @@ export default function ToolPage({ tool }) {
   const [state, setState] = useState('idle')
   const [results, setResults] = useState(null)
 
-  const showError = (title, message) => {
-    toast({ message: `${title}: ${message}`, variant: 'error', duration: 5000 })
+  const showError = (message, title) => {
+    toast({ message, variant: 'error', title })
   }
 
-  const showSuccess = (title, message) => {
-    toast({ message, variant: 'success' })
+  const showSuccess = (message) => {
+    toast({ message, variant: 'success', title: 'Analysis Complete' })
   }
 
   const handleAnalyze = async () => {
     if (!resumeFile) {
-      showError('Upload Required', 'Please upload your resume to continue.')
+      showError('Please upload your resume to continue.', 'Upload Required')
       return
     }
 
     if (tool.needsJD && !jdText.trim()) {
-      showError('Input Required', 'Please paste the job description to continue.')
+      showError('Please paste the job description to continue.', 'Input Required')
       return
     }
 
@@ -61,7 +61,7 @@ export default function ToolPage({ tool }) {
 
       if (!validation.ok) {
         setState('idle')
-        showError('Validation Failed', validation.message)
+        showError(validation.message, 'Validation Failed')
         return
       }
 
@@ -75,13 +75,27 @@ export default function ToolPage({ tool }) {
       setResults(data)
       recordAnalysis(data.atsScore)
       setState('results')
-
-      showSuccess('Analysis Complete', 'Your resume has been successfully evaluated.')
+      showSuccess('Your resume has been successfully evaluated.')
     } catch (err) {
-      console.error(err)
+      console.error('[ToolPage] Analysis error:', err)
       setResults(null)
       setState('idle')
-      showError('Analysis Failed', err?.message || 'Something went wrong while communicating with the server. Please try again.')
+
+      // Parse AI-specific error types for actionable messages
+      const msg = err?.message || ''
+      if (msg.includes('quota') || msg.includes('429') || msg.includes('rate')) {
+        showError('The AI service is currently at capacity. Please wait a moment and try again.', 'Rate Limit')
+      } else if (msg.includes('safety') || msg.includes('SAFETY') || msg.includes('content policy')) {
+        showError('The content could not be processed due to a safety filter. Please check your resume content.', 'Content Policy')
+      } else if (msg.includes('JSON') || msg.includes('parse') || msg.includes('Unexpected token')) {
+        showError('The AI returned an unexpected response. Please try again.', 'Parse Error')
+      } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+        showError('A network error occurred. Please check your connection and try again.', 'Connection Error')
+      } else if (msg.includes('extract') || msg.includes('text')) {
+        showError(msg, 'Resume Unreadable')
+      } else {
+        showError(msg || 'Something went wrong while communicating with the AI. Please try again.', 'Analysis Failed')
+      }
     }
   }
 

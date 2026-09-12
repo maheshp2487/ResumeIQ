@@ -2,7 +2,7 @@
 
 > AI-powered resume analysis, ATS checking, JD matching, and resume building — all in the browser. No sign-up. No credit card. Free.
 
-**Live:** [your-vercel-url.vercel.app](https://your-vercel-url.vercel.app)
+**Live:** [sumeiq-wheat.vercel.app](https://sumeiq-wheat.vercel.app)
 
 ---
 

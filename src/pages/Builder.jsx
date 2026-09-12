@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -19,6 +19,41 @@ export default function Builder() {
   const [expandedExpId, setExpandedExpId] = useState(null)
   const [expandedEduId, setExpandedEduId] = useState(null)
   const [newSkill, setNewSkill] = useState('')
+  const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false)
+
+  // Auto-scale resume preview to fit its container on all screen sizes
+  const previewWrapRef = useRef(null)
+  const [previewZoom, setPreviewZoom] = useState(1)
+
+  useEffect(() => {
+    const el = previewWrapRef.current
+    if (!el) return
+    const updateZoom = () => {
+      const available = el.clientWidth - 16
+      if (available > 0) {
+        const zoom = Math.min(available / 850, 0.96)
+        setPreviewZoom(Math.max(zoom, 0.28))
+      }
+    }
+    updateZoom()
+    const ro = new ResizeObserver(updateZoom)
+    ro.observe(el)
+    window.addEventListener('resize', updateZoom)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', updateZoom)
+    }
+  }, [isMobilePreviewOpen])
+
+  // Close template dropdown on outside click
+  useEffect(() => {
+    if (!templateDropdownOpen) return
+    const handler = (e) => {
+      if (!e.target.closest('[data-template-dropdown]')) setTemplateDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [templateDropdownOpen])
 
   // Resume State
   const [data, setData] = useState({
@@ -193,7 +228,7 @@ export default function Builder() {
   )
 
   const renderExperienceForm = () => (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
       {data.experience.map((exp, index) => {
         const isExpanded = expandedExpId === exp.id
         return (
@@ -276,7 +311,7 @@ export default function Builder() {
   )
 
   const renderEducationForm = () => (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
       {data.education.map((edu, index) => {
         const isExpanded = expandedEduId === edu.id
         return (
@@ -447,9 +482,9 @@ export default function Builder() {
           <div className="space-y-4">
             {data.experience.map(exp => (
               <div key={exp.id}>
-                <div className="flex justify-between items-baseline mb-1">
+                <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="font-bold text-gray-900">{exp.company}</h3>
-                  <span className="text-sm text-gray-600 font-medium">{exp.date}</span>
+                  <span className="text-sm text-gray-600 font-medium whitespace-nowrap flex-shrink-0">{exp.date}</span>
                 </div>
                 <p className="text-sm italic text-gray-700 mb-2">{exp.role}</p>
                 <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{exp.desc}</p>
@@ -464,12 +499,12 @@ export default function Builder() {
           <h2 className="text-lg font-bold uppercase text-gray-900 border-b border-gray-300 mb-3">Education</h2>
           <div className="space-y-3">
             {data.education.map(edu => (
-              <div key={edu.id} className="flex justify-between items-baseline">
-                <div>
-                  <h3 className="font-bold text-gray-900">{edu.school}</h3>
+              <div key={edu.id} className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900 truncate">{edu.school}</h3>
                   <p className="text-sm text-gray-700">{edu.degree}</p>
                 </div>
-                <span className="text-sm text-gray-600 font-medium">{edu.date}</span>
+                <span className="text-sm text-gray-600 font-medium whitespace-nowrap flex-shrink-0 mt-0.5">{edu.date}</span>
               </div>
             ))}
           </div>
@@ -873,37 +908,79 @@ export default function Builder() {
           </div>
         </div>
 
-        {/* Template Selector */}
-        <div className="flex flex-wrap gap-2 p-1 bg-bg-secondary border border-border rounded-xl w-fit">
-          {TEMPLATES.map(t => (
-            <button
-              key={t}
-              onClick={() => setTemplate(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${template === t ? 'bg-bg text-txt shadow-sm border border-border' : 'text-txt-muted hover:text-txt'}`}
+        {/* Template Selector — Professional Dropdown */}
+        <div className="relative w-fit" data-template-dropdown="">
+          <button
+            id="template-selector-btn"
+            onClick={() => setTemplateDropdownOpen(o => !o)}
+            className="flex items-center gap-3 px-5 py-2.5 bg-bg-secondary border border-border rounded-xl text-sm font-bold text-txt hover:border-brand/40 transition-all shadow-sm"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>Template: <span className="text-brand">{template}</span></span>
+            <svg
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              className={`text-txt-muted transition-transform duration-200 ${templateDropdownOpen ? 'rotate-180' : ''}`}
             >
-              {t}
-            </button>
-          ))}
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          {templateDropdownOpen && (
+            <div className="absolute top-full left-0 mt-2 z-50 bg-bg-secondary border border-border rounded-2xl shadow-2xl shadow-black/10 p-2 min-w-[200px] animate-fade-in">
+              {TEMPLATES.map(t => (
+                <button
+                  key={t}
+                  onClick={() => { setTemplate(t); setTemplateDropdownOpen(false) }}
+                  className={`w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors ${
+                    template === t
+                      ? 'bg-brand-surface text-brand font-bold'
+                      : 'text-txt-muted hover:text-txt hover:bg-bg font-medium'
+                  }`}
+                >
+                  {template === t && <span className="w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0" />}
+                  {template !== t && <span className="w-1.5 h-1.5 flex-shrink-0" />}
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-start gap-8">
           
           {/* Left Column: Form (hidden on mobile if preview is open) */}
           <div className={`w-full lg:w-1/2 flex-shrink-0 ${isMobilePreviewOpen ? 'hidden lg:block' : 'block'}`}>
-            <Card className="rounded-2xl border border-border bg-bg shadow-sm h-fit flex flex-col">
-              <div className="flex overflow-x-auto border-b border-border mb-6 hide-scrollbar">
-                {['profile', 'experience', 'education', 'skills'].map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 min-w-[100px] py-3 text-sm font-bold uppercase tracking-wider text-center border-b-2 transition-colors ${activeTab === tab ? 'border-brand text-brand bg-brand-surface' : 'border-transparent text-txt-muted hover:bg-bg-secondary'}`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+            <Card padding={false} hover={false} className="rounded-2xl border border-border bg-bg shadow-sm h-fit flex flex-col overflow-hidden">
+              {/* Full-width flush tab bar */}
+              <div className="grid grid-cols-4 border-b border-border bg-bg-secondary/40">
+                {[
+                  { id: 'profile',    label: 'Profile' },
+                  { id: 'experience', label: 'Experience' },
+                  { id: 'education',  label: 'Education' },
+                  { id: 'skills',     label: 'Skills' },
+                ].map(tab => {
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`py-3 px-1 text-xs sm:text-sm font-bold uppercase tracking-wider text-center border-b-2 transition-all duration-150 select-none ${
+                        isActive
+                          ? 'border-brand text-brand bg-bg font-bold shadow-sm'
+                          : 'border-transparent text-txt-muted hover:text-txt hover:bg-bg/50'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  )
+                })}
               </div>
 
-              <div className="flex-1">
+              {/* Form Content container with neat, proportional padding */}
+              <div className="p-4 sm:p-6 flex-1">
                 {activeTab === 'profile' && renderProfileForm()}
                 {activeTab === 'experience' && renderExperienceForm()}
                 {activeTab === 'education' && renderEducationForm()}
@@ -915,9 +992,28 @@ export default function Builder() {
           {/* Right Column: Live Preview (hidden on mobile if form is open) */}
           <div className={`w-full lg:w-1/2 ${!isMobilePreviewOpen ? 'hidden lg:block' : 'block'}`}>
             <div className="sticky top-24">
-              <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-2xl p-4 overflow-x-auto border border-border">
-                {/* The actual preview container that gets printed */}
-                <div id="resume-preview" ref={printRef} className="origin-top lg:scale-95 transition-transform bg-white text-black w-full max-w-[850px] mx-auto shadow-2xl">
+              {/* Mobile quick actions bar when preview is open */}
+              {isMobilePreviewOpen && (
+                <div className="flex lg:hidden items-center justify-between pb-3 mb-3 border-b border-border">
+                  <button
+                    onClick={() => setIsMobilePreviewOpen(false)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-brand hover:text-brand-hover bg-brand-surface px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    ← Back to Form
+                  </button>
+                  <span className="text-xs text-txt-muted font-medium">Scaled to fit screen</span>
+                </div>
+              )}
+
+              {/* Auto-zoom wrapper: ResizeObserver keeps track of available width */}
+              <div ref={previewWrapRef} className="bg-gray-100/80 dark:bg-gray-800/60 rounded-2xl p-2 sm:p-4 border border-border overflow-hidden flex justify-center">
+                {/* zoom property scales layout proportionally — no print interference */}
+                <div
+                  id="resume-preview"
+                  ref={printRef}
+                  style={{ zoom: previewZoom }}
+                  className="bg-white text-black w-[850px] mx-auto shadow-xl"
+                >
                   {renderActiveTemplate()}
                 </div>
               </div>

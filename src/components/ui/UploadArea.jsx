@@ -17,9 +17,19 @@ export default function UploadArea({
 
     if (f.type !== 'application/pdf') {
       toast({
-        message: 'Only PDF files are supported.',
+        message: 'Only PDF files are supported. Please upload a .pdf resume.',
         variant: 'error',
-        duration: 4200,
+        title: 'Invalid File Type',
+      })
+      return
+    }
+
+    const MAX_MB = 5
+    if (f.size > MAX_MB * 1024 * 1024) {
+      toast({
+        message: `Your file is too large. Please upload a PDF smaller than ${MAX_MB}MB.`,
+        variant: 'warning',
+        title: 'File Too Large',
       })
       return
     }
@@ -28,9 +38,10 @@ export default function UploadArea({
 
     toast({
       message: String(label).toLowerCase().includes('job')
-        ? `Job description uploaded successfully`
-        : `Resume uploaded successfully`,
+        ? 'Job description uploaded successfully'
+        : 'Resume uploaded. Ready for analysis.',
       variant: 'success',
+      title: 'Uploaded',
     })
   }
 
